@@ -2,9 +2,33 @@
 
 API y reglas de negocio de la plataforma CICUC.
 
-## Estado
+## Inicio local
 
-Tanda 0: repositorio creado; implementación técnica pendiente de HU-001.
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+La API queda disponible en `http://localhost:8000`, su salud en `/api/v1/salud` y OpenAPI en `/documentacion-api`.
+
+## Desarrollo sin contenedores
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[dev]'
+uvicorn app.main:app --reload
+```
+
+Verificación:
+
+```bash
+ruff check .
+ruff format --check .
+mypy app tests
+pytest
+alembic upgrade head --sql
+```
 
 ## Stack decidido
 

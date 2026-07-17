@@ -1,0 +1,30 @@
+services:
+  base_datos:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: gestion_estudios
+      POSTGRES_USER: cicuc
+      POSTGRES_PASSWORD: cicuc_demo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cicuc -d gestion_estudios"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_datos:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      CICUC_ENTORNO: desarrollo
+      CICUC_BASE_DATOS_URL: postgresql+psycopg://cicuc:cicuc_demo@base_datos:5432/gestion_estudios
+    depends_on:
+      base_datos:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_datos:
