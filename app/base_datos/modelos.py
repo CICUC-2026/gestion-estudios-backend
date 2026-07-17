@@ -12,3 +12,7 @@ CONVENCION_NOMBRES = {
 
 class ModeloBase(DeclarativeBase):
     metadata = MetaData(naming_convention=CONVENCION_NOMBRES)
+
+
+# Los modelos se importan aquí para que Alembic descubra su metadata.
+from app.dominios.autenticacion import modelos as modelos_autenticacion  # noqa: E402, F401

@@ -20,6 +20,7 @@ services:
     environment:
       CICUC_ENTORNO: desarrollo
       CICUC_BASE_DATOS_URL: postgresql+psycopg://cicuc:cicuc_demo@base_datos:5432/gestion_estudios
+      CICUC_ORIGENES_FRONTEND: http://localhost:5173
     depends_on:
       base_datos:
         condition: service_healthy
