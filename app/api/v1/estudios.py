@@ -13,32 +13,38 @@ from app.dominios.autenticacion.dependencias import (
 )
 from app.dominios.autenticacion.modelos import RolUsuario, Usuario
 from app.dominios.estudios.esquemas import (
+    ActualizarDisponibilidad,
+    ActualizarEstadoOperacional,
     ActualizarEstudio,
     ComparacionVersionesRespuesta,
     CrearEstudio,
     CrearVersionProtocolo,
     CriterioManualRespuesta,
     EstudioRespuesta,
+    ReconfirmarVigencia,
     VersionProtocoloRespuesta,
 )
 from app.dominios.estudios.modelos import (
+    CohorteEstudio,
+    EstadoDisponibilidadEstudio,
     EstadoEstudio,
+    EstadoOperacionalEstudio,
     Estudio,
+    EtiquetaVigencia,
     VersionProtocolo,
 )
 from app.dominios.estudios.servicio import (
+    actualizar_disponibilidad,
+    actualizar_estado_operacional,
     actualizar_estudio,
     crear_estudio,
     crear_version_protocolo,
     publicar_version_protocolo,
+    reconfirmar_vigencia,
 )
 
 router = APIRouter(prefix="/estudios", tags=["estudios"])
 
-# Permisos por rol:
-# - Ver estudios: usuarios autenticados.
-# - Crear/editar estudio o version: administrador, coordinador, investigador principal.
-# - Publicar versión: administrador, investigador principal.
 PermisoGestionEstudio = Annotated[
     Usuario,
     Depends(
@@ -65,8 +71,9 @@ def _obtener_estudio_o_404(sesion_db: SesionDb, estudio_id: uuid.UUID) -> Estudi
     estudio = sesion_db.scalar(
         select(Estudio)
         .options(
-            selectinload(Estudio.cohortes),
+            selectinload(Estudio.cohortes).selectinload(CohorteEstudio.brazos),
             selectinload(Estudio.versiones).selectinload(VersionProtocolo.criterios),
+            selectinload(Estudio.historial_estados),
         )
         .where(Estudio.id == estudio_id)
     )
@@ -89,19 +96,31 @@ def listar_estudios(
     usuario: UsuarioActual,
     patologia: Annotated[str | None, Query()] = None,
     estado: Annotated[EstadoEstudio | None, Query()] = None,
+    estado_operacional: Annotated[EstadoOperacionalEstudio | None, Query()] = None,
+    disponibilidad: Annotated[EstadoDisponibilidadEstudio | None, Query()] = None,
+    vigencia: Annotated[EtiquetaVigencia | None, Query()] = None,
 ) -> list[EstudioRespuesta]:
     consulta = select(Estudio).options(
-        selectinload(Estudio.cohortes),
+        selectinload(Estudio.cohortes).selectinload(CohorteEstudio.brazos),
         selectinload(Estudio.versiones).selectinload(VersionProtocolo.criterios),
+        selectinload(Estudio.historial_estados),
     )
     if patologia:
         consulta = consulta.where(Estudio.patologia.ilike(f"%{patologia}%"))
     if estado:
         consulta = consulta.where(Estudio.estado == estado)
-    consulta = consulta.order_by(Estudio.creado_en.desc())
+    if estado_operacional:
+        consulta = consulta.where(Estudio.estado_operacional == estado_operacional)
+    if disponibilidad:
+        consulta = consulta.where(Estudio.disponibilidad == disponibilidad)
 
+    consulta = consulta.order_by(Estudio.creado_en.desc())
     estudios = sesion_db.scalars(consulta).all()
-    return [_serializar_estudio(e) for e in estudios]
+
+    resultado = [_serializar_estudio(e) for e in estudios]
+    if vigencia:
+        resultado = [e for e in resultado if e.etiqueta_vigencia == vigencia]
+    return resultado
 
 
 @router.post("", response_model=EstudioRespuesta, status_code=201)
@@ -140,6 +159,63 @@ def modificar_estudio(
 ) -> EstudioRespuesta:
     estudio = _obtener_estudio_o_404(sesion_db, estudio_id)
     estudio = actualizar_estudio(
+        sesion_db,
+        estudio,
+        datos,
+        actor_id=autorizado.id,
+        direccion_ip=request.client.host if request.client else None,
+    )
+    return _serializar_estudio(estudio)
+
+
+@router.patch("/{estudio_id}/estado-operacional", response_model=EstudioRespuesta)
+def cambiar_estado_operacional(
+    estudio_id: uuid.UUID,
+    datos: ActualizarEstadoOperacional,
+    request: Request,
+    sesion_db: SesionDb,
+    autorizado: PermisoGestionEstudio,
+) -> EstudioRespuesta:
+    estudio = _obtener_estudio_o_404(sesion_db, estudio_id)
+    estudio = actualizar_estado_operacional(
+        sesion_db,
+        estudio,
+        datos,
+        actor_id=autorizado.id,
+        direccion_ip=request.client.host if request.client else None,
+    )
+    return _serializar_estudio(estudio)
+
+
+@router.patch("/{estudio_id}/disponibilidad", response_model=EstudioRespuesta)
+def cambiar_disponibilidad(
+    estudio_id: uuid.UUID,
+    datos: ActualizarDisponibilidad,
+    request: Request,
+    sesion_db: SesionDb,
+    autorizado: PermisoGestionEstudio,
+) -> EstudioRespuesta:
+    estudio = _obtener_estudio_o_404(sesion_db, estudio_id)
+    estudio = actualizar_disponibilidad(
+        sesion_db,
+        estudio,
+        datos,
+        actor_id=autorizado.id,
+        direccion_ip=request.client.host if request.client else None,
+    )
+    return _serializar_estudio(estudio)
+
+
+@router.post("/{estudio_id}/reconfirmar-vigencia", response_model=EstudioRespuesta)
+def ejecutar_reconfirmacion_vigencia(
+    estudio_id: uuid.UUID,
+    datos: ReconfirmarVigencia,
+    request: Request,
+    sesion_db: SesionDb,
+    autorizado: PermisoGestionEstudio,
+) -> EstudioRespuesta:
+    estudio = _obtener_estudio_o_404(sesion_db, estudio_id)
+    estudio = reconfirmar_vigencia(
         sesion_db,
         estudio,
         datos,

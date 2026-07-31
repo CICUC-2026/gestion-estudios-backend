@@ -1,4 +1,3 @@
-import uuid
 from sqlalchemy import select
 
 from app.base_datos.modelos import ModeloBase
@@ -54,31 +53,35 @@ def sembrar_datos() -> None:
             print("Usuario PI creado: investigador@cicuc.cl")
 
         # 3. Crear Estudio de Demostración (MK-1084-014)
-        estudio_existente = sesion.scalar(select(Usuario).where(Usuario.correo == correo_pi))
         estudio = crear_estudio(
             sesion,
             CrearEstudio(
-                codigo_protocolo="MK-1084-014",
+                codigo_interno="EST-001",
                 titulo="Estudio Fase 3 KANDLELIT-014 en Cáncer Colorrectal Avanzado KRAS G12C",
                 patologia="Cáncer Colorrectal",
+                escenario_clinico="Metastásico",
                 fase="Fase 3",
                 patrocinador="MSD",
                 linea_tratamiento="Segunda línea",
                 centro_atencion="CICUC San Joaquín",
+                coordinador_id=admin.id,
+                investigador_principal_id=pi.id if pi else None,
             ),
-            coordinador_id=admin.id,
+            actor_id=admin.id,
+            direccion_ip="127.0.0.1",
         )
-        print(f"Estudio demo creado: {estudio.codigo_protocolo}")
+        print(f"Estudio demo creado: {estudio.codigo_interno}")
 
         # 4. Crear Versión de Protocolo inicial
         version = crear_version_protocolo(
             sesion,
-            estudio.id,
+            estudio,
             CrearVersionProtocolo(
                 numero_version="v1.0",
-                resumen_cambios="Versión inicial del protocolo oficial MK-1084-014",
+                descripcion_cambios="Versión inicial del protocolo oficial MK-1084-014",
             ),
-            creada_por_id=admin.id,
+            actor_id=admin.id,
+            direccion_ip="127.0.0.1",
         )
         print(f"Versión de protocolo creada: {version.numero_version}")
 

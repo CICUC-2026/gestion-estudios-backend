@@ -1,0 +1,11 @@
+codigo_interno,titulo,patrocinador,fase,patologia,escenario_clinico,linea_tratamiento,centro_atencion,estado_operacional,disponibilidad,fuente_informacion
+EST-ONCO-001,Estudio Fase 3 KANDLELIT-014 en Cáncer Colorrectal Avanzado KRAS G12C,MSD,Fase 3,Cáncer Colorrectal,Metastásico,Segunda línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-002,Estudio LITESPARK-029 en Carcinoma de Células Renales,Merck,Fase 3,Cáncer Renal,Avanzado,Primera línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-003,Estudio TroFuse-011 en Cáncer de Pulmón no Células Pequeñas,Gilead,Fase 3,Cáncer de Pulmón,Metastásico,Segunda línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-004,Estudio TroFuse-036 en Melanoma Avanzado,Gilead,Fase 2,Melanoma,Metastásico,Primera línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-005,Estudio ALKAZAR en Cáncer de Mama HER2 Positivo,Roche,Fase 3,Cáncer de Mama,Adyuvante,Primera línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-006,Estudio OMAHA en Carcinoma Hepatocelular,BMS,Fase 3,Cáncer Hepático,Avanzado,Primera línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-007,Estudio TroFuse-022 en Cáncer Urotelial,Gilead,Fase 3,Cáncer Urotelial,Metastásico,Segunda línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-008,Estudio TroFuse-033 en Cáncer de Próstata Resistente a la Castración,Gilead,Fase 3,Cáncer de Próstata,Metastásico,Segunda línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-009,Estudio MK-1084-012 en Neoplasias Sólidas Avanzadas KRAS G12C,MSD,Fase 1/2,Pantumoral,Metastásico,Avanzado,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026
+EST-ONCO-010,Estudio DESTINY-Gastric04 en Cáncer Gástrico HER2+,Daiichi Sankyo,Fase 3,Cáncer Gástrico,Metastásico,Segunda línea,CICUC San Joaquín,activado,con_cupo,Catálogo Julio 2026

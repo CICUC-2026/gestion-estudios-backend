@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
@@ -8,16 +8,21 @@ from sqlalchemy.orm import Session
 from app.api.errores import ErrorApi
 from app.dominios.autenticacion.servicio import auditar
 from app.dominios.estudios.esquemas import (
+    ActualizarDisponibilidad,
+    ActualizarEstadoOperacional,
     ActualizarEstudio,
     CrearEstudio,
     CrearVersionProtocolo,
+    ReconfirmarVigencia,
 )
 from app.dominios.estudios.modelos import (
+    BrazoEstudio,
     CohorteEstudio,
     CriterioManual,
     EstadoEstudio,
     EstadoVersionProtocolo,
     Estudio,
+    HistorialEstadoEstudio,
     VersionProtocolo,
 )
 
@@ -43,8 +48,12 @@ def crear_estudio(
         escenario_clinico=datos.escenario_clinico.strip(),
         linea_tratamiento=datos.linea_tratamiento.strip(),
         centro_atencion=datos.centro_atencion.strip(),
+        estado_operacional=datos.estado_operacional,
+        disponibilidad=datos.disponibilidad,
         estado=EstadoEstudio.BORRADOR,
         disponible=True,
+        fuente_informacion=datos.fuente_informacion,
+        fecha_corte=datos.fecha_corte,
         observaciones=datos.observaciones,
         investigador_principal_id=datos.investigador_principal_id,
         coordinador_id=datos.coordinador_id,
@@ -63,15 +72,30 @@ def crear_estudio(
         ) from error
 
     for cohorte_dato in datos.cohortes:
-        sesion_db.add(
-            CohorteEstudio(
-                estudio_id=estudio.id,
-                nombre=cohorte_dato.nombre.strip(),
-                descripcion=cohorte_dato.descripcion,
-                biomarcadores_requeridos=cohorte_dato.biomarcadores_requeridos,
-                meta_reclutamiento=cohorte_dato.meta_reclutamiento,
-            )
+        cohorte = CohorteEstudio(
+            estudio_id=estudio.id,
+            nombre=cohorte_dato.nombre.strip(),
+            descripcion=cohorte_dato.descripcion,
+            patologia=cohorte_dato.patologia,
+            subtipo_histologico=cohorte_dato.subtipo_histologico,
+            escenario_clinico=cohorte_dato.escenario_clinico,
+            linea_tratamiento=cohorte_dato.linea_tratamiento,
+            biomarcadores_requeridos=cohorte_dato.biomarcadores_requeridos,
+            meta_reclutamiento=cohorte_dato.meta_reclutamiento,
+            estado_operacional=cohorte_dato.estado_operacional,
+            disponibilidad=cohorte_dato.disponibilidad,
         )
+        sesion_db.add(cohorte)
+        sesion_db.flush()
+
+        for brazo_dato in cohorte_dato.brazos:
+            sesion_db.add(
+                BrazoEstudio(
+                    cohorte_id=cohorte.id,
+                    nombre=brazo_dato.nombre.strip(),
+                    descripcion=brazo_dato.descripcion,
+                )
+            )
 
     auditar(
         sesion_db,
@@ -82,6 +106,128 @@ def crear_estudio(
         entidad_id=estudio.id,
         direccion_ip=direccion_ip,
         contexto={"codigo": estudio.codigo_interno, "titulo": estudio.titulo},
+    )
+    sesion_db.commit()
+    sesion_db.refresh(estudio)
+    return estudio
+
+
+def actualizar_estado_operacional(
+    sesion_db: Session,
+    estudio: Estudio,
+    datos: ActualizarEstadoOperacional,
+    *,
+    actor_id: uuid.UUID,
+    direccion_ip: str | None,
+) -> Estudio:
+    instante = ahora_utc()
+    valor_anterior = estudio.estado_operacional.value
+    estudio.estado_operacional = datos.estado_operacional
+    estudio.actualizado_en = instante
+
+    historial = HistorialEstadoEstudio(
+        estudio_id=estudio.id,
+        campo_modificado="estado_operacional",
+        valor_anterior=valor_anterior,
+        valor_nuevo=datos.estado_operacional.value,
+        fecha=instante,
+        autor_id=actor_id,
+        fuente=datos.fuente.strip(),
+        motivo=datos.motivo.strip(),
+    )
+    sesion_db.add(historial)
+
+    auditar(
+        sesion_db,
+        accion="estudio.actualizar_estado_operacional",
+        entidad="estudio",
+        resultado="exito",
+        usuario_id=actor_id,
+        entidad_id=estudio.id,
+        direccion_ip=direccion_ip,
+        contexto={
+            "anterior": valor_anterior,
+            "nuevo": datos.estado_operacional.value,
+            "motivo": datos.motivo,
+        },
+    )
+    sesion_db.commit()
+    sesion_db.refresh(estudio)
+    return estudio
+
+
+def actualizar_disponibilidad(
+    sesion_db: Session,
+    estudio: Estudio,
+    datos: ActualizarDisponibilidad,
+    *,
+    actor_id: uuid.UUID,
+    direccion_ip: str | None,
+) -> Estudio:
+    instante = ahora_utc()
+    valor_anterior = estudio.disponibilidad.value
+    estudio.disponibilidad = datos.disponibilidad
+    estudio.actualizado_en = instante
+
+    historial = HistorialEstadoEstudio(
+        estudio_id=estudio.id,
+        campo_modificado="disponibilidad",
+        valor_anterior=valor_anterior,
+        valor_nuevo=datos.disponibilidad.value,
+        fecha=instante,
+        autor_id=actor_id,
+        fuente=datos.fuente.strip(),
+        motivo=datos.motivo.strip(),
+    )
+    sesion_db.add(historial)
+
+    auditar(
+        sesion_db,
+        accion="estudio.actualizar_disponibilidad",
+        entidad="estudio",
+        resultado="exito",
+        usuario_id=actor_id,
+        entidad_id=estudio.id,
+        direccion_ip=direccion_ip,
+        contexto={
+            "anterior": valor_anterior,
+            "nuevo": datos.disponibilidad.value,
+            "motivo": datos.motivo,
+        },
+    )
+    sesion_db.commit()
+    sesion_db.refresh(estudio)
+    return estudio
+
+
+def reconfirmar_vigencia(
+    sesion_db: Session,
+    estudio: Estudio,
+    datos: ReconfirmarVigencia,
+    *,
+    actor_id: uuid.UUID,
+    direccion_ip: str | None,
+) -> Estudio:
+    instante = ahora_utc()
+    estudio.fuente_informacion = datos.fuente_informacion.strip()
+    estudio.fecha_corte = datos.fecha_corte or instante
+    estudio.verificado_por_id = actor_id
+    estudio.fecha_verificacion = instante
+    estudio.proxima_revision = instante + timedelta(days=datos.dias_validez)
+    estudio.actualizado_en = instante
+
+    auditar(
+        sesion_db,
+        accion="estudio.reconfirmar_vigencia",
+        entidad="estudio",
+        resultado="exito",
+        usuario_id=actor_id,
+        entidad_id=estudio.id,
+        direccion_ip=direccion_ip,
+        contexto={
+            "fuente": estudio.fuente_informacion,
+            "proxima_revision": estudio.proxima_revision.isoformat(),
+        },
     )
     sesion_db.commit()
     sesion_db.refresh(estudio)
@@ -154,6 +300,9 @@ def crear_version_protocolo(
             CriterioManual(
                 version_id=version.id,
                 tipo=crit.tipo,
+                alcance=crit.alcance,
+                cohorte_id=crit.cohorte_id,
+                brazo_id=crit.brazo_id,
                 orden=crit.orden,
                 codigo_criterio=crit.codigo_criterio.strip().upper(),
                 descripcion=crit.descripcion.strip(),
@@ -187,8 +336,6 @@ def publicar_version_protocolo(
     instante = ahora_utc()
     estudio = version.estudio
 
-    # Regla de inmutabilidad y transición:
-    # 1. Marcar cualquier versión vigente previa como REEMPLAZADA y no vigente.
     sesion_db.execute(
         update(VersionProtocolo)
         .where(
@@ -201,13 +348,11 @@ def publicar_version_protocolo(
         )
     )
 
-    # 2. Publicar la versión seleccionada como VIGENTE.
     version.es_vigente = True
     version.estado = EstadoVersionProtocolo.VIGENTE
     version.publicada_en = instante
     version.publicada_por_id = actor_id
 
-    # 3. Si el estudio estaba en borrador o revisión, pasa a VIGENTE.
     if estudio.estado in (EstadoEstudio.BORRADOR, EstadoEstudio.EN_REVISION):
         estudio.estado = EstadoEstudio.VIGENTE
         estudio.actualizado_en = instante
