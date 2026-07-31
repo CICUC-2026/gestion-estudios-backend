@@ -3,7 +3,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.dominios.autenticacion.esquemas import UsuarioRespuesta
 from app.dominios.estudios.modelos import (
     EstadoEstudio,
     EstadoVersionProtocolo,

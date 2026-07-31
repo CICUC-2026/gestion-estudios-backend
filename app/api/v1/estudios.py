@@ -22,7 +22,6 @@ from app.dominios.estudios.esquemas import (
     VersionProtocoloRespuesta,
 )
 from app.dominios.estudios.modelos import (
-    CriterioManual,
     EstadoEstudio,
     Estudio,
     VersionProtocolo,
@@ -88,8 +87,8 @@ def _serializar_estudio(estudio: Estudio) -> EstudioRespuesta:
 def listar_estudios(
     sesion_db: SesionDb,
     usuario: UsuarioActual,
-    patologia: str | None = Query(None),
-    estado: EstadoEstudio | None = Query(None),
+    patologia: Annotated[str | None, Query()] = None,
+    estado: Annotated[EstadoEstudio | None, Query()] = None,
 ) -> list[EstudioRespuesta]:
     consulta = select(Estudio).options(
         selectinload(Estudio.cohortes),

@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.dominios.autenticacion.esquemas import CrearUsuario
 from app.dominios.autenticacion.modelos import RolUsuario
@@ -7,7 +8,7 @@ from app.dominios.autenticacion.servicio import crear_usuario
 
 
 @pytest.fixture
-def token_coordinador(cliente: TestClient, sesion_db) -> str:
+def token_coordinador(cliente: TestClient, sesion_db: Session) -> str:
     coord = crear_usuario(
         sesion_db,
         CrearUsuario(
@@ -28,7 +29,7 @@ def token_coordinador(cliente: TestClient, sesion_db) -> str:
 
 
 @pytest.fixture
-def token_medico(cliente: TestClient, sesion_db) -> str:
+def token_medico(cliente: TestClient, sesion_db: Session) -> str:
     med = crear_usuario(
         sesion_db,
         CrearUsuario(

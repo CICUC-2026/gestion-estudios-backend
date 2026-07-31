@@ -1,5 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.dominios.autenticacion.esquemas import CrearUsuario
 from app.dominios.autenticacion.modelos import RolUsuario
@@ -47,7 +47,7 @@ def test_administrador_asigna_y_modifica_roles_de_usuario(
 
 
 def test_usuario_sin_rol_requerido_es_rechazado(
-    cliente: TestClient, base_limpia: None, sesion_db
+    cliente: TestClient, base_limpia: None, sesion_db: Session
 ) -> None:
     # Crear usuario médico sin rol de administrador
     medico = crear_usuario(

@@ -1,4 +1,5 @@
-from typing import Annotated, Callable
+from collections.abc import Callable
+from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -47,7 +48,9 @@ def requerir_roles(*roles_permitidos: RolUsuario) -> Callable[[Usuario], Usuario
             return usuario
         roles_usuario = {r.rol for r in usuario.roles}
         if not roles_usuario.intersection(roles_permitidos):
-            raise ErrorApi(403, "PERMISO_DENEGADO", "No cuenta con el rol requerido para esta acción.")
+            raise ErrorApi(
+                403, "PERMISO_DENEGADO", "No cuenta con el rol requerido para esta acción."
+            )
         return usuario
 
     return verificador

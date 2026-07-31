@@ -2,6 +2,7 @@ import hashlib
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
@@ -61,7 +62,7 @@ def auditar(
     usuario_id: uuid.UUID | None = None,
     entidad_id: uuid.UUID | None = None,
     direccion_ip: str | None = None,
-    contexto: dict[str, str | bool] | None = None,
+    contexto: dict[str, Any] | None = None,
 ) -> None:
     sesion_db.add(
         RegistroAuditoria(
@@ -75,6 +76,7 @@ def auditar(
             contexto=contexto or {},
         )
     )
+
 
 def crear_usuario(
     sesion_db: Session,

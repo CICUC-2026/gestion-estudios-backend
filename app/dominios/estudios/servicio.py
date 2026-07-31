@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,7 +9,6 @@ from app.api.errores import ErrorApi
 from app.dominios.autenticacion.servicio import auditar
 from app.dominios.estudios.esquemas import (
     ActualizarEstudio,
-    CrearCriterioManual,
     CrearEstudio,
     CrearVersionProtocolo,
 )
