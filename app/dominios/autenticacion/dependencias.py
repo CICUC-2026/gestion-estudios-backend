@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Callable
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.errores import ErrorApi
 from app.base_datos.sesion import obtener_sesion
-from app.dominios.autenticacion.modelos import Sesion, Usuario
+from app.dominios.autenticacion.modelos import RolUsuario, Sesion, Usuario
 from app.dominios.autenticacion.servicio import obtener_sesion_activa
 
 portador = HTTPBearer(auto_error=False)
@@ -39,3 +39,15 @@ def administrador_actual(usuario: UsuarioActual) -> Usuario:
 
 
 AdministradorActual = Annotated[Usuario, Depends(administrador_actual)]
+
+
+def requerir_roles(*roles_permitidos: RolUsuario) -> Callable[[Usuario], Usuario]:
+    def verificador(usuario: UsuarioActual) -> Usuario:
+        if usuario.es_administrador_sistema:
+            return usuario
+        roles_usuario = {r.rol for r in usuario.roles}
+        if not roles_usuario.intersection(roles_permitidos):
+            raise ErrorApi(403, "PERMISO_DENEGADO", "No cuenta con el rol requerido para esta acción.")
+        return usuario
+
+    return verificador

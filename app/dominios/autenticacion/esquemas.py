@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.dominios.autenticacion.modelos import RolUsuario
+
 
 class CredencialesIngreso(BaseModel):
     correo: EmailStr
@@ -24,6 +26,7 @@ class UsuarioRespuesta(BaseModel):
     correo: EmailStr
     es_administrador_sistema: bool
     activo: bool
+    roles: list[RolUsuario] = Field(default_factory=list)
     ultimo_acceso: datetime | None
     creado_en: datetime
 
@@ -34,6 +37,11 @@ class CrearUsuario(BaseModel):
     correo: EmailStr
     contrasena_inicial: str = Field(min_length=12, max_length=256)
     es_administrador_sistema: bool = False
+    roles: list[RolUsuario] = Field(default_factory=list)
+
+
+class AsignarRolesUsuario(BaseModel):
+    roles: list[RolUsuario]
 
 
 class CambiarEstadoUsuario(BaseModel):

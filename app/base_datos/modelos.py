@@ -16,3 +16,4 @@ class ModeloBase(DeclarativeBase):
 
 # Los modelos se importan aquí para que Alembic descubra su metadata.
 from app.dominios.autenticacion import modelos as modelos_autenticacion  # noqa: E402, F401
+from app.dominios.estudios import modelos as modelos_estudios  # noqa: E402, F401

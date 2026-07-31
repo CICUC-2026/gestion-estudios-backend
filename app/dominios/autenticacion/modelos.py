@@ -1,11 +1,37 @@
+import enum
 import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.base_datos.modelos import ModeloBase
+
+
+class RolUsuario(str, enum.Enum):
+    ADMINISTRADOR = "administrador"
+    INVESTIGADOR_PRINCIPAL = "investigador_principal"
+    MEDICO_INVESTIGADOR = "medico_investigador"
+    ENFERMERIA = "enfermeria"
+    COORDINADOR = "coordinador"
+    AUDITOR = "auditor"
+
+
+class UsuarioRol(ModeloBase):
+    __tablename__ = "usuario_roles"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
+    )
+    rol: Mapped[RolUsuario] = mapped_column(Enum(RolUsuario, name="rol_usuario_enum"), index=True)
+    asignado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    asignado_por_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="SET NULL")
+    )
+
+    usuario: Mapped["Usuario"] = relationship(back_populates="roles", foreign_keys=[usuario_id])
 
 
 class Usuario(ModeloBase):
@@ -25,6 +51,9 @@ class Usuario(ModeloBase):
     actualizado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     sesiones: Mapped[list["Sesion"]] = relationship(back_populates="usuario")
+    roles: Mapped[list["UsuarioRol"]] = relationship(
+        back_populates="usuario", foreign_keys=[UsuarioRol.usuario_id], cascade="all, delete-orphan"
+    )
 
 
 class Sesion(ModeloBase):

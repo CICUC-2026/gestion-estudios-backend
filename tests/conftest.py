@@ -3,10 +3,11 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 os.environ.setdefault(
     "CICUC_BASE_DATOS_URL",
-    "postgresql+psycopg://localhost:55432/gestion_estudios_pruebas",
+    "postgresql+psycopg://cicuc:cicuc_demo@127.0.0.1:5432/gestion_estudios_pruebas",
 )
 
 from app.base_datos.modelos import ModeloBase  # noqa: E402
@@ -28,6 +29,12 @@ def base_limpia() -> Generator[None, None, None]:
 @pytest.fixture
 def cliente() -> TestClient:
     return TestClient(app)
+
+
+@pytest.fixture
+def sesion_db() -> Generator[Session, None, None]:
+    with FabricaSesiones() as sesion:
+        yield sesion
 
 
 @pytest.fixture

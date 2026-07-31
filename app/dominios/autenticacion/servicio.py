@@ -12,7 +12,13 @@ from sqlalchemy.orm import Session
 from app.api.errores import ErrorApi
 from app.configuracion.ajustes import Ajustes
 from app.dominios.autenticacion.esquemas import CrearUsuario
-from app.dominios.autenticacion.modelos import RegistroAuditoria, Sesion, Usuario
+from app.dominios.autenticacion.modelos import (
+    RegistroAuditoria,
+    RolUsuario,
+    Sesion,
+    Usuario,
+    UsuarioRol,
+)
 
 _verificador = PasswordHasher()
 _hash_ficticio = _verificador.hash("valor-ficticio-para-tiempo-constante")
@@ -70,7 +76,6 @@ def auditar(
         )
     )
 
-
 def crear_usuario(
     sesion_db: Session,
     datos: CrearUsuario,
@@ -96,6 +101,19 @@ def crear_usuario(
     except IntegrityError as error:
         sesion_db.rollback()
         raise ErrorApi(409, "CUENTA_NO_DISPONIBLE", "No fue posible crear la cuenta.") from error
+
+    if datos.roles:
+        roles_unicos = set(datos.roles)
+        for rol in roles_unicos:
+            sesion_db.add(
+                UsuarioRol(
+                    usuario_id=usuario.id,
+                    rol=rol,
+                    asignado_en=instante,
+                    asignado_por_id=actor_id,
+                )
+            )
+
     auditar(
         sesion_db,
         accion="usuario.crear",
@@ -104,6 +122,49 @@ def crear_usuario(
         usuario_id=actor_id,
         entidad_id=usuario.id,
         direccion_ip=direccion_ip,
+        contexto={"roles": [r.value for r in datos.roles]} if datos.roles else None,
+    )
+    sesion_db.commit()
+    sesion_db.refresh(usuario)
+    return usuario
+
+
+def asignar_roles_usuario(
+    sesion_db: Session,
+    usuario: Usuario,
+    nuevos_roles: list[RolUsuario],
+    *,
+    actor_id: uuid.UUID,
+    direccion_ip: str | None,
+) -> Usuario:
+    instante = ahora_utc()
+    roles_unicos = set(nuevos_roles)
+
+    # Eliminar roles actuales y asignar los nuevos
+    sesion_db.scalars(select(UsuarioRol).where(UsuarioRol.usuario_id == usuario.id)).all()
+    for rol_existente in list(usuario.roles):
+        sesion_db.delete(rol_existente)
+
+    for rol in roles_unicos:
+        sesion_db.add(
+            UsuarioRol(
+                usuario_id=usuario.id,
+                rol=rol,
+                asignado_en=instante,
+                asignado_por_id=actor_id,
+            )
+        )
+
+    usuario.actualizado_en = instante
+    auditar(
+        sesion_db,
+        accion="usuario.asignar_roles",
+        entidad="usuario",
+        resultado="exito",
+        usuario_id=actor_id,
+        entidad_id=usuario.id,
+        direccion_ip=direccion_ip,
+        contexto={"roles": [r.value for r in roles_unicos]},
     )
     sesion_db.commit()
     sesion_db.refresh(usuario)

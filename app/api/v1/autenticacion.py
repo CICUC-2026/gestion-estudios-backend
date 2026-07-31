@@ -13,7 +13,7 @@ from app.dominios.autenticacion.esquemas import (
     TokenSesion,
     UsuarioRespuesta,
 )
-from app.dominios.autenticacion.modelos import Sesion
+from app.dominios.autenticacion.modelos import RolUsuario, Sesion
 from app.dominios.autenticacion.servicio import (
     ahora_utc,
     auditar,
@@ -41,7 +41,18 @@ def ingresar(datos: CredencialesIngreso, request: Request, sesion_db: SesionDb) 
 
 @router.get("/yo", response_model=UsuarioRespuesta)
 def yo(usuario: UsuarioActual) -> UsuarioRespuesta:
-    return UsuarioRespuesta.model_validate(usuario)
+    roles_enum = [RolUsuario(r.rol) for r in usuario.roles]
+    return UsuarioRespuesta(
+        id=usuario.id,
+        nombres=usuario.nombres,
+        apellidos=usuario.apellidos,
+        correo=usuario.correo,
+        es_administrador_sistema=usuario.es_administrador_sistema,
+        activo=usuario.activo,
+        roles=roles_enum,
+        ultimo_acceso=usuario.ultimo_acceso,
+        creado_en=usuario.creado_en,
+    )
 
 
 @router.post("/salir", status_code=status.HTTP_204_NO_CONTENT)
