@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.autenticacion import router as autenticacion_router
+from app.api.v1.cupos import router as cupos_router
 from app.api.v1.estudios import router as estudios_router
 from app.api.v1.operacion import router as operacion_router
 from app.api.v1.pacientes import router as pacientes_router
@@ -16,3 +17,4 @@ router.include_router(estudios_router)
 router.include_router(operacion_router)
 router.include_router(pacientes_router)
 router.include_router(preseleccion_router)
+router.include_router(cupos_router)
