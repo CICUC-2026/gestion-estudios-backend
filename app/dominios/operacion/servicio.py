@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.dominios.autenticacion.modelos import Usuario
 from app.dominios.autenticacion.servicio import auditar
 from app.dominios.estudios.modelos import Estudio
-from app.dominios.operacion.esquemas import CrearReporte, CrearTarea
+from app.dominios.operacion.esquemas import ActualizarTarea, CrearReporte, CrearTarea
 from app.dominios.operacion.modelos import EstadoTarea, ReporteOperativo, Tarea
 
 
@@ -20,6 +20,8 @@ def crear_tarea(sesion: Session, datos: CrearTarea, usuario: Usuario) -> Tarea:
         vence_en=datos.vence_en,
         creada_por_id=usuario.id,
         responsable_id=datos.responsable_id or usuario.id,
+        paciente_id=datos.paciente_id,
+        estudio_id=datos.estudio_id,
         creada_en=ahora,
         actualizada_en=ahora,
     )
@@ -32,6 +34,29 @@ def crear_tarea(sesion: Session, datos: CrearTarea, usuario: Usuario) -> Tarea:
         resultado="exito",
         usuario_id=usuario.id,
         entidad_id=tarea.id,
+    )
+    sesion.commit()
+    sesion.refresh(tarea)
+    return tarea
+
+
+def actualizar_tarea(
+    sesion: Session, tarea: Tarea, datos: ActualizarTarea, usuario: Usuario
+) -> Tarea:
+    cambios = datos.model_dump(exclude_unset=True)
+    for campo, valor in cambios.items():
+        setattr(
+            tarea, campo, valor.strip() if campo == "titulo" and isinstance(valor, str) else valor
+        )
+    tarea.actualizada_en = datetime.now(UTC)
+    auditar(
+        sesion,
+        accion="tarea.actualizar",
+        entidad="tarea",
+        resultado="exito",
+        usuario_id=usuario.id,
+        entidad_id=tarea.id,
+        contexto=datos.model_dump(mode="json", exclude_unset=True),
     )
     sesion.commit()
     sesion.refresh(tarea)

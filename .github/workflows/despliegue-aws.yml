@@ -37,3 +37,31 @@ jobs:
 
       - name: Notificar estado ECR
         run: echo "Imagen del backend construida y publicada exitosamente en ECR."
+
+      - name: Actualizar backend en servidor EC2
+        env:
+          EC2_INSTANCE_ID: i-08ab46a4c0b14152d
+          EC2_HOST: 3.224.111.136
+        run: |
+          ssh-keygen -t ed25519 -f /tmp/deploy_key -N "" -q
+          aws ec2-instance-connect send-ssh-public-key \
+            --instance-id "$EC2_INSTANCE_ID" \
+            --instance-os-user ec2-user \
+            --ssh-public-key file:///tmp/deploy_key.pub
+          sleep 2
+          ssh -o StrictHostKeyChecking=no -i /tmp/deploy_key ec2-user@"$EC2_HOST" \
+            "cd /opt/cicuc/backend && \
+             git checkout main && git pull --ff-only origin main && \
+             sudo docker compose -f docker-compose.prod.yml build api && \
+             sudo docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && \
+             sudo docker compose -f docker-compose.prod.yml up -d api"
+
+      - name: Verificar backend desplegado
+        run: |
+          for intento in $(seq 1 12); do
+            if curl --fail --silent --show-error https://adyac.online/api/v1/salud; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1

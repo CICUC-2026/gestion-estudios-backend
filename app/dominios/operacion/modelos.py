@@ -42,6 +42,12 @@ class Tarea(ModeloBase):
     responsable_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("usuarios.id", ondelete="SET NULL"), index=True
     )
+    paciente_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("pacientes_demo.id", ondelete="SET NULL"), index=True
+    )
+    estudio_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("estudios.id", ondelete="SET NULL"), index=True
+    )
     creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     actualizada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 

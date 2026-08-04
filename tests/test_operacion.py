@@ -9,6 +9,13 @@ def test_tareas_y_reportes_persisten_y_auditan(cliente: TestClient, token_admin:
     assert tarea.status_code == 201
     assert tarea.json()["estado"] == "pendiente"
     assert len(cliente.get("/api/v1/tareas", headers=headers).json()) == 1
+    actualizada = cliente.patch(
+        f"/api/v1/tareas/{tarea.json()['id']}",
+        headers=headers,
+        json={"estado": "completada", "prioridad": "media"},
+    )
+    assert actualizada.status_code == 200
+    assert actualizada.json()["estado"] == "completada"
 
     reporte = cliente.post(
         "/api/v1/reportes",
@@ -16,7 +23,7 @@ def test_tareas_y_reportes_persisten_y_auditan(cliente: TestClient, token_admin:
         json={"nombre": "Corte operativo", "finalidad": "Seguimiento de trabajo pendiente"},
     )
     assert reporte.status_code == 201
-    assert reporte.json()["contenido"]["tareas_pendientes"] == 1
+    assert reporte.json()["contenido"]["tareas_pendientes"] == 0
     assert len(cliente.get("/api/v1/reportes", headers=headers).json()) == 1
 
 

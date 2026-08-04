@@ -13,6 +13,19 @@ class CrearTarea(BaseModel):
     prioridad: PrioridadTarea = PrioridadTarea.MEDIA
     vence_en: datetime | None = None
     responsable_id: uuid.UUID | None = None
+    paciente_id: uuid.UUID | None = None
+    estudio_id: uuid.UUID | None = None
+
+
+class ActualizarTarea(BaseModel):
+    titulo: str | None = Field(default=None, min_length=1, max_length=160)
+    descripcion: str | None = None
+    prioridad: PrioridadTarea | None = None
+    estado: EstadoTarea | None = None
+    vence_en: datetime | None = None
+    responsable_id: uuid.UUID | None = None
+    paciente_id: uuid.UUID | None = None
+    estudio_id: uuid.UUID | None = None
 
 
 class TareaRespuesta(BaseModel):
@@ -25,6 +38,8 @@ class TareaRespuesta(BaseModel):
     vence_en: datetime | None
     creada_por_id: uuid.UUID | None
     responsable_id: uuid.UUID | None
+    paciente_id: uuid.UUID | None
+    estudio_id: uuid.UUID | None
     creada_en: datetime
     actualizada_en: datetime
 
