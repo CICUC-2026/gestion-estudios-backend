@@ -46,7 +46,11 @@ def test_paciente_demo_persiste_diagnostico_asociacion_y_archivo(
         json={
             "codigo_interno": "EST-DEMO-42",
             "titulo": "Estudio completamente ficticio",
+            "patrocinador": "Patrocinador ficticio",
+            "fase": "Fase demo",
             "patologia": "Patología ficticia A",
+            "escenario_clinico": "Escenario ficticio",
+            "linea_tratamiento": "Línea ficticia",
         },
     )
     assert estudio.status_code == 201
