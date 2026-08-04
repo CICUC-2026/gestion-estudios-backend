@@ -1,0 +1,1 @@
+"""Preselección manual exclusivamente sintética."""

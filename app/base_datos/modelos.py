@@ -19,3 +19,4 @@ from app.dominios.autenticacion import modelos as modelos_autenticacion  # noqa:
 from app.dominios.estudios import modelos as modelos_estudios  # noqa: E402, F401
 from app.dominios.operacion import modelos as modelos_operacion  # noqa: E402, F401
 from app.dominios.pacientes import modelos as modelos_pacientes  # noqa: E402, F401
+from app.dominios.preseleccion import modelos as modelos_preseleccion  # noqa: E402, F401
