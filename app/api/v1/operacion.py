@@ -26,6 +26,10 @@ GestionOperativa = Annotated[
         )
     ),
 ]
+Reportero = Annotated[
+    Usuario,
+    Depends(requerir_roles(RolUsuario.COORDINADOR, RolUsuario.INVESTIGADOR_PRINCIPAL)),
+]
 
 
 @router.get("/tareas", response_model=list[TareaRespuesta])
@@ -57,6 +61,6 @@ def listar_reportes(sesion: SesionDb, _: UsuarioActual) -> list[ReporteOperativo
 
 @router.post("/reportes", response_model=ReporteRespuesta, status_code=201)
 def registrar_reporte(
-    datos: CrearReporte, sesion: SesionDb, usuario: GestionOperativa
+    datos: CrearReporte, sesion: SesionDb, usuario: Reportero
 ) -> ReporteOperativo:
     return preparar_reporte(sesion, datos, usuario)

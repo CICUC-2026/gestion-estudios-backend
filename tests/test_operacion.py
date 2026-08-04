@@ -24,7 +24,25 @@ def test_tareas_y_reportes_persisten_y_auditan(cliente: TestClient, token_admin:
     )
     assert reporte.status_code == 201
     assert reporte.json()["contenido"]["tareas_pendientes"] == 0
+    assert reporte.json()["contenido"]["metricas"]["tareas"]["presentacion"] == "<5"
+    assert reporte.json()["contenido"]["metricas"]["tareas"]["suprimido"] is True
+    assert reporte.json()["contenido"]["advertencia"].startswith("Uso operativo")
+    assert reporte.json()["contenido"]["filtros"] == {
+        "estudio_id": None,
+        "estados_tarea": [],
+    }
     assert len(cliente.get("/api/v1/reportes", headers=headers).json()) == 1
+
+    futuro = cliente.post(
+        "/api/v1/reportes",
+        headers=headers,
+        json={
+            "nombre": "Corte futuro",
+            "finalidad": "Debe rechazarse",
+            "fecha_corte": "2099-01-01T00:00:00Z",
+        },
+    )
+    assert futuro.status_code == 422
 
 
 def test_operacion_requiere_sesion(cliente: TestClient) -> None:

@@ -47,6 +47,9 @@ class TareaRespuesta(BaseModel):
 class CrearReporte(BaseModel):
     nombre: str = Field(min_length=1, max_length=160)
     finalidad: str = Field(min_length=1, max_length=240)
+    fecha_corte: datetime | None = None
+    estudio_id: uuid.UUID | None = None
+    estados_tarea: list[EstadoTarea] = []
 
 
 class ReporteRespuesta(BaseModel):
