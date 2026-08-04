@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi.testclient import TestClient
 
 
@@ -109,20 +111,23 @@ def test_preseleccion_rechaza_version_de_otro_estudio(
         json={"codigo": "PX-DEMO-PRE-02", "rango_etario": "35–49 años", "patologia": "Ficticia"},
     ).json()
 
-    def estudio(codigo: str) -> dict:
-        return cliente.post(
-            "/api/v1/estudios",
-            headers=headers,
-            json={
-                "codigo_interno": codigo,
-                "titulo": codigo,
-                "patrocinador": "Demo",
-                "fase": "Demo",
-                "patologia": "Ficticia",
-                "escenario_clinico": "Ficticio",
-                "linea_tratamiento": "Ficticia",
-            },
-        ).json()
+    def estudio(codigo: str) -> dict[str, object]:
+        return cast(
+            dict[str, object],
+            cliente.post(
+                "/api/v1/estudios",
+                headers=headers,
+                json={
+                    "codigo_interno": codigo,
+                    "titulo": codigo,
+                    "patrocinador": "Demo",
+                    "fase": "Demo",
+                    "patologia": "Ficticia",
+                    "escenario_clinico": "Ficticio",
+                    "linea_tratamiento": "Ficticia",
+                },
+            ).json(),
+        )
 
     primero, segundo = estudio("EST-PRE-A"), estudio("EST-PRE-B")
     version = cliente.post(
