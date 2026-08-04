@@ -1,12 +1,14 @@
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.dominios.cupos.modelos import CupoDemo
 
 
-def _crear_base(cliente: TestClient, token: str) -> tuple[dict, dict]:
+def _crear_base(cliente: TestClient, token: str) -> tuple[dict[str, Any], dict[str, Any]]:
     headers = {"Authorization": f"Bearer {token}"}
     paciente = cliente.post(
         "/api/v1/pacientes-demo",
@@ -72,7 +74,7 @@ def test_cupo_confirma_reserva_ocupa_y_conserva_historial(
 
 
 def test_vencimiento_no_reasigna_y_exige_reconfirmacion(
-    cliente: TestClient, token_admin: str, sesion_db
+    cliente: TestClient, token_admin: str, sesion_db: Session
 ) -> None:
     headers = {"Authorization": f"Bearer {token_admin}"}
     paciente, estudio = _crear_base(cliente, token_admin)
@@ -87,6 +89,7 @@ def test_vencimiento_no_reasigna_y_exige_reconfirmacion(
         json={"estado": "reservado", "paciente_id": paciente["id"], "motivo": "Reserva demo"},
     )
     cupo = sesion_db.scalar(select(CupoDemo).where(CupoDemo.id == item["id"]))
+    assert cupo is not None
     cupo.vence_en = datetime.now(UTC) - timedelta(minutes=1)
     sesion_db.commit()
     listado = cliente.get("/api/v1/cupos-demo", headers=headers).json()
