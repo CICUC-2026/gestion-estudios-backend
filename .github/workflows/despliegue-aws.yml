@@ -51,8 +51,8 @@ jobs:
           sleep 2
           ssh -o StrictHostKeyChecking=no -i /tmp/deploy_key ec2-user@"$EC2_HOST" \
             "cd /opt/cicuc/backend && \
-             git config --global --add safe.directory /opt/cicuc/backend && \
-             git checkout main && git pull --ff-only origin main && \
+             sudo git config --global --add safe.directory /opt/cicuc/backend && \
+             sudo git checkout main && sudo git pull --ff-only origin main && \
              sudo docker compose -f docker-compose.prod.yml build api && \
              sudo docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && \
              sudo docker compose -f docker-compose.prod.yml up -d api"
